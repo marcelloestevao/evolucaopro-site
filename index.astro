@@ -1,0 +1,25 @@
+---
+const response = await fetch("http://localhost:3001/players");
+const players = await response.json();
+---
+
+<h1 class="text-3xl text-center font-bold my-6">Evolução Pro - Player Cards</h1>
+
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 p-4">
+  {players.map(player => (
+    <div class="bg-white rounded-xl shadow p-4 text-center">
+      <img src={player.card_image} alt="Card" class="w-full mb-4" />
+      <img src={player.image_url} alt={player.name} class="w-24 h-24 mx-auto rounded-full -mt-16 border-4 border-white shadow" />
+      <h2 class="text-xl font-bold mt-2">{player.name}</h2>
+      <p class="text-sm text-gray-600">{player.psn_id} - {player.nationality}</p>
+      <div class="text-sm mt-2">
+        <p><strong>Games:</strong> {player.games_played}</p>
+        <p><strong>Wins:</strong> {player.wins}</p>
+        <p><strong>Draws:</strong> {player.draws}</p>
+        <p><strong>Losses:</strong> {player.losses}</p>
+        <p><strong>GF:</strong> {player.goals_for} | <strong>GA:</strong> {player.goals_against}</p>
+        <p><strong>Points:</strong> {player.points}</p>
+      </div>
+    </div>
+  ))}
+</div>

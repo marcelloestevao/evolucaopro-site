@@ -1,0 +1,64 @@
+---
+import Header from '../components/Header.astro';
+import PlayerCard from '../components/PlayerCard.astro';
+
+const token = Astro.cookies.get('token')?.value;
+
+let player = null;
+let inscricao = null;
+
+if (typeof window === 'undefined' && token) {
+  const painelRes = await fetch('http://localhost:3001/api/me', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (painelRes.ok) {
+    player = await painelRes.json();
+  }
+
+  const inscricaoRes = await fetch('http://localhost:3001/api/tournament/inscritos', {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+
+  if (inscricaoRes.ok) {
+    inscricao = await inscricaoRes.json();
+  }
+}
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Painel do Jogador</title>
+  </head>
+  <body class="bg-white text-black">
+    <Header />
+
+    <main class="max-w-5xl mx-auto p-6 mt-8 bg-gray-100 rounded-xl shadow-md text-center">
+      <h2 class="text-2xl font-bold mb-6">Painel do Jogador</h2>
+
+      {
+        player ? (
+          <div>
+            <div class="flex justify-center mb-6">
+              <PlayerCard player={player} />
+            </div>
+
+            {inscricao?.inscrito && (
+              <p class="mt-4 text-green-600 font-semibold">
+                Você está {inscricao.dentroDoLimite ? 'classificado' : 'fora do limite'} — posição {inscricao.posicao} de {inscricao.total}
+              </p>
+            )}
+
+            {!inscricao?.inscrito && (
+              <p class="mt-4 text-red-600">Você ainda não está inscrito no torneio.</p>
+            )}
+          </div>
+        ) : (
+          <p class="text-red-600">Erro ao carregar painel.</p>
+        )
+      }
+    </main>
+  </body>
+</html>

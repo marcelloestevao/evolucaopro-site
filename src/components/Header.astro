@@ -1,0 +1,43 @@
+---
+import "../styles/global.css";
+---
+
+<header class="w-full bg-black text-white p-4 flex justify-between items-center">
+  <h1 class="text-xl font-bold">Evolução Pro</h1>
+  <nav>
+    <ul id="nav-dynamic" class="flex gap-4 text-sm md:text-base"></ul>
+  </nav>
+</header>
+
+<script client:load>
+  const nav = document.getElementById("nav-dynamic");
+  if (nav) {
+    const token = localStorage.getItem("token");
+
+    const home = document.createElement("li");
+    home.innerHTML = '<a href="/" class="hover:underline">Home</a>';
+    nav.appendChild(home);
+
+     const ranking = document.createElement("li");
+    ranking.innerHTML = '<a href="/ranking" class="hover:underline">Ranking</a>';
+    nav.appendChild(ranking);
+
+    const torneio = document.createElement("li");
+    torneio.innerHTML = '<a href="/torneio" class="hover:underline">Torneio</a>';
+    nav.appendChild(torneio);
+
+    if (!token) {
+      const cadastro = document.createElement("li");
+      cadastro.innerHTML = '<a href="/cadastro" class="hover:underline">Cadastro</a>';
+      nav.appendChild(cadastro);
+
+      const login = document.createElement("li");
+      login.innerHTML = '<a href="/login" class="hover:underline">Login</a>';
+      nav.appendChild(login);
+    } else {
+      const painel = document.createElement("li");
+      painel.innerHTML = '<a href="/painel" class="hover:underline">Painel</a>';
+      nav.appendChild(painel);
+    }
+  }
+</script>

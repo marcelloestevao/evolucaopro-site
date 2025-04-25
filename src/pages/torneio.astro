@@ -1,0 +1,191 @@
+---
+import Header from '../components/Header.astro';
+import PlayerCard from '../components/PlayerCard.astro';
+
+let partidas = [];
+
+try {
+  const res = await fetch('http://localhost:3001/api/matches');
+  if (res.ok) {
+    partidas = await res.json();
+  }
+} catch (error) {
+  console.error('Erro ao buscar partidas:', error);
+}
+
+// Agrupamento por grupo e rodada
+const grupos = {};
+for (const partida of partidas) {
+  const grupo = partida.round;
+  const rodada = partida.matchday;
+
+  if (!grupos[grupo]) grupos[grupo] = {};
+  if (!grupos[grupo][rodada]) grupos[grupo][rodada] = [];
+  grupos[grupo][rodada].push(partida);
+}
+
+// Função de classificação (apenas para fase de grupos)
+function calcularClassificacao(partidasGrupo) {
+  const stats = {};
+
+  for (const rodada in partidasGrupo) {
+    for (const partida of partidasGrupo[rodada]) {
+      const { jogador_a, jogador_b, score_a, score_b, status } = partida;
+
+      if (status !== "finalizado") continue;
+
+      for (const jogador of [jogador_a, jogador_b]) {
+        if (!stats[jogador.id]) {
+          stats[jogador.id] = {
+            psn: jogador.psn_id,
+            pontos: 0,
+            v: 0,
+            e: 0,
+            d: 0,
+            gp: 0,
+            gc: 0
+          };
+        }
+      }
+
+      stats[jogador_a.id].gp += score_a;
+      stats[jogador_a.id].gc += score_b;
+      stats[jogador_b.id].gp += score_b;
+      stats[jogador_b.id].gc += score_a;
+
+      if (score_a > score_b) {
+        stats[jogador_a.id].pontos += 3;
+        stats[jogador_a.id].v++;
+        stats[jogador_b.id].d++;
+      } else if (score_b > score_a) {
+        stats[jogador_b.id].pontos += 3;
+        stats[jogador_b.id].v++;
+        stats[jogador_a.id].d++;
+      } else {
+        stats[jogador_a.id].pontos += 1;
+        stats[jogador_b.id].pontos += 1;
+        stats[jogador_a.id].e++;
+        stats[jogador_b.id].e++;
+      }
+    }
+  }
+
+  return Object.values(stats).map(j => ({
+    ...j,
+    j: j.v + j.e + j.d,
+    sg: j.gp - j.gc
+  })).sort((a, b) =>
+    b.pontos - a.pontos || b.sg - a.sg || b.gp - a.gp
+  );
+}
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fase de Grupos</title>
+  </head>
+  <body class="bg-white text-black">
+    <Header />
+
+    <main class="max-w-6xl mx-auto p-6">
+      <h2 class="text-center text-2xl font-bold mb-8">Fase de Grupos</h2>
+
+      {
+        Object.entries(grupos).map(([grupo, rodadas]) => {
+          const rodadaKeys = Object.keys(rodadas).sort();
+          const mostrarTabela = grupo !== "Oitavas";
+          const classificacao = mostrarTabela ? calcularClassificacao(rodadas) : [];
+        return (
+          <section class="mb-12">
+            <h3 class="text-lg font-semibold mb-4">Grupo {grupo}</h3>
+
+            {mostrarTabela && (
+              <table class="w-full text-sm text-center mb-4 border">
+                <thead class="bg-gray-100">
+                  <tr>
+                    <th class="px-2 py-1 text-left">JOGADOR</th>
+                    <th>PTS</th><th>J</th><th>V</th><th>E</th><th>D</th><th>GP</th><th>GC</th><th>SG</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {
+                    classificacao.map(j => (
+                      <tr class="border-t">
+                        <td class="text-left px-2 py-1">{j.psn}</td>
+                        <td>{j.pontos}</td><td>{j.j}</td><td>{j.v}</td><td>{j.e}</td><td>{j.d}</td><td>{j.gp}</td><td>{j.gc}</td><td>{j.sg}</td>
+                      </tr>
+                    ))
+                  }
+                </tbody>
+              </table>
+            )}
+
+            {/* Botões de rodada (somente fase de grupos) */}
+            {mostrarTabela && (
+              <div class={`flex justify-center gap-2 mb-4 botoes-${grupo}`}>
+                {
+                  rodadaKeys.map((rodada, index) => (
+                    <button
+                      id={`btn-${grupo}-${rodada}`}
+                      class={`px-4 py-1 rounded ${index === 0 ? 'bg-gray-800 text-white' : 'bg-gray-200 text-black'}`}
+                      onClick={`showRodada('${grupo}', ${rodada})`}
+                    >
+                      Rodada {rodada}
+                    </button>
+                  ))
+                }
+              </div>
+            )}
+
+            {/* Rodadas */}
+            {
+              rodadaKeys.map((rodada, idx) => (
+                <div class={`rodada-${grupo} rodada-${grupo}-matchday-${rodada}`} style={`display: ${!mostrarTabela || idx === 0 ? 'block' : 'none'};`}>
+                  <div class="grid gap-6">
+                    {
+                      rodadas[rodada].map(jogo => (
+                        <div class="flex flex-col sm:flex-row justify-center items-center gap-4 border p-4 rounded-lg shadow">
+                          <PlayerCard player={jogo.jogador_a} />
+                          <div class="text-xl font-bold sm:mx-4">
+                            {jogo.status === "pendente"
+                              ? "VS"
+                              : `${jogo.score_a} x ${jogo.score_b}`}
+                          </div>
+                          <PlayerCard player={jogo.jogador_b} />
+                        </div>
+                      ))
+                    }
+                  </div>
+                </div>
+              ))
+            }
+          </section>
+        )})
+      }
+    </main>
+
+<script client:load>
+  window.showRodada = function(grupo, rodada) {
+    if (grupo === "Oitavas") return;
+
+    const todasRodadas = document.querySelectorAll(`.rodada-${grupo}`);
+    todasRodadas.forEach(el => el.style.display = 'none');
+
+    const rodadaSelecionada = document.querySelectorAll(`.rodada-${grupo}-matchday-${rodada}`);
+    rodadaSelecionada.forEach(el => el.style.display = 'block');
+
+    const botoes = document.querySelectorAll(`.botoes-${grupo} button`);
+    botoes.forEach(btn => btn.classList.remove('bg-gray-800', 'text-white'));
+
+    const botaoAtivo = document.getElementById(`btn-${grupo}-${rodada}`);
+    if (botaoAtivo) {
+      botaoAtivo.classList.add('bg-gray-800', 'text-white');
+    }
+  };
+</script>
+
+
+  </body>
+</html>

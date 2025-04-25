@@ -1,0 +1,60 @@
+---
+const { player } = Astro.props;
+
+function getCardBackground(goals) {
+  if (goals >= 301) return "/cards/Hero.png";
+  if (goals >= 101) return "/cards/Gold.png";
+  if (goals >= 51) return "/cards/Silver.png";
+  return "/cards/Bronze.png";
+}
+
+const bgImage = getCardBackground(player?.goals_for ?? 0);
+---
+
+<div
+  class="relative w-[220px] h-[350px] sm:w-[180px] sm:h-[300px] xs:w-[150px] xs:h-[250px] bg-no-repeat bg-contain bg-center"
+  style={`background-image: url(${bgImage})`}
+>
+
+  <div class="absolute top-[80px] left-[15px] text-[18px] sm:text-[16px] font-bold text-black uppercase">
+    {player?.position ?? "ST"}
+  </div>
+  <img
+    src={player?.escudo_url || "/escudos/br.png"}
+    alt="Escudo"
+    class="absolute top-[100px] left-[6px] w-[35px] h-[35px] object-contain"
+/>
+
+
+
+
+  <div class="absolute top-[24px] md:left-[105px] sm:left-[105px] transform -translate-x-1/2 w-[120px] h-[120px]  overflow-hidden">
+  <img
+    src={player?.image_url || "/perfis/placeholder.png"}
+    alt={player.name}
+    class="w-full h-full object-cover"
+  />
+</div>
+
+
+
+
+
+  <div class="absolute md:top-[145px] sm:top-[145px] md:left-[105px] sm:left-[110px] transform -translate-x-1/2 text-[16px] sm:text-[14px] font-semibold text-black text-center whitespace-nowrap">
+    {player?.psn_id ?? "Sem PSN"}
+  </div>
+  <div class="absolute top-[170px] sm:top-[175px] left-[10px] w-full px-10 text-[13px] sm:text-[12px] font-bold text-black">
+    <div class="grid grid-cols-2 gap-x-1 leading-tight">
+      <div class="text-left space-y-[12px]">
+        <p>PAC {player?.pac ?? 0}</p>
+        <p>SHO {player?.sho ?? 0}</p>
+        <p>PAS {player?.pas ?? 0}</p>
+      </div>
+      <div class="text-right space-y-[12px]">
+        <p>DRI {player?.dri ?? 0}</p>
+        <p>DEF {player?.def ?? 0}</p>
+        <p>PHY {player?.phy ?? 0}</p>
+      </div>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,35 @@
+---
+import "../styles/global.css";
+import Header from '../components/Header.astro';
+import PlayerCard from '../components/PlayerCard.astro';
+
+const response = await fetch("http://localhost:3001/api/players");
+let players = [];
+
+if (response.ok) {
+  const data = await response.json();
+  players = data.sort((a, b) => (b.goals_for || 0) - (a.goals_for || 0)).slice(0, 4);
+}
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Evolução Pro - Top Goleadores</title>
+  </head>
+  <body class="bg-white text-black">
+    <Header />
+
+    <main class="p-4">
+      <h2 class="text-center text-2xl font-bold my-6">Top Goleadores</h2>
+      <div class="flex flex-wrap justify-center gap-6">
+        {
+          players.map(player => (
+            <PlayerCard player={player} />
+          ))
+        }
+      </div>
+    </main>
+  </body>
+</html>

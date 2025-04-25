@@ -1,0 +1,58 @@
+
+---
+import Header from '../components/Header.astro';
+import PlayerCard from '../components/PlayerCard.astro';
+
+let partidas = [];
+
+try {
+  const res = await fetch('http://localhost:3001/api/matches');
+  if (res.ok) {
+    partidas = await res.json();
+  }
+} catch (error) {
+  console.error('Erro ao buscar partidas:', error);
+}
+---
+
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fase de Grupos - Placar</title>
+  </head>
+  <body class="bg-white text-black">
+    <Header />
+
+    <main class="max-w-6xl mx-auto p-6">
+      <h2 class="text-center text-2xl font-bold mb-8">Confrontos da Fase de Grupos</h2>
+
+      {
+        partidas.length > 0 ? (
+          Object.groupBy(partidas, p => p.round).entries().map(([grupo, jogos]) => (
+            <section class="mb-12">
+              <h3 class="text-lg font-semibold mb-4">Grupo {grupo}</h3>
+              <div class="grid gap-6">
+                {
+                  jogos.map(jogo => (
+                    <div class="flex flex-col sm:flex-row justify-center items-center gap-4 border p-4 rounded-lg shadow">
+                      <PlayerCard player={jogo.jogador_a} />
+                      <div class="text-xl font-bold sm:mx-4">
+                        {jogo.status === "pendente"
+                          ? "VS"
+                          : `${jogo.score_a} x ${jogo.score_b}`}
+                      </div>
+                      <PlayerCard player={jogo.jogador_b} />
+                    </div>
+                  ))
+                }
+              </div>
+            </section>
+          ))
+        ) : (
+          <p class="text-center text-red-600">Nenhuma partida encontrada.</p>
+        )
+      }
+    </main>
+  </body>
+</html>
